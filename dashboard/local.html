@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facial Muscle Deception Lab</title>
+<style>
+  /* local stand-ins for the theme tokens the claude.ai dashboard runtime provides */
+  :root {
+    --color-fg: #1d1d1f; --color-fg-muted: #6e6e73; --color-bg: #f2f2f7; --color-panel: #ffffff;
+    --color-border-line: rgba(60,60,67,.16); --color-ok: #248a3d; --color-warn: #c93400; --color-bad: #d70015;
+    --cds-chart-grid: rgba(60,60,67,.10); --cds-chart-axis: rgba(60,60,67,.35);
+    --cds-surface-popover: #ffffff; --cds-border: rgba(60,60,67,.18); --cds-shadow-popover: 0 6px 24px rgba(0,0,0,.12);
+    --cds-dur-slow: 320ms; --cds-ease-out: cubic-bezier(.2,.8,.2,1);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-fg: #f5f5f7; --color-fg-muted: #98989d; --color-bg: #000000; --color-panel: #1c1c1e;
+      --color-border-line: rgba(84,84,88,.6); --cds-chart-grid: rgba(235,235,245,.10); --cds-chart-axis: rgba(235,235,245,.35);
+      --cds-surface-popover: #2c2c2e; --cds-border: rgba(84,84,88,.6);
+      color-scheme: dark;
+    }
+  }
+  body { margin: 0; background: var(--color-bg); color: var(--color-fg); }
+  #dash-root { padding: 24px max(16px, 4vw); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body>
+<div id="dash-root"></div>
+<script>
+// Minimal `dash` shim so index.html runs without claude.ai, reading the local JSON files.
+const FILES = {
+  models: 'upload/models.json', muscles_global: 'upload/muscles_global.json', clips: 'upload/clips.json',
+  clip_muscles: 'upload/clip_muscles.json', clip_attention: 'upload/clip_attention.json', clip_moments: 'upload/clip_moments.json',
+  face_vertices: 'upload/face_vertices.json', face_triangles: 'upload/face_triangles.json', face_anchors: 'upload/face_anchors.json',
+  clip_muscle_timeline: 'upload/clip_muscle_timeline.json',
+};
+const store = {}, calcs = {}, draws = {}, onDataFns = [];
+let params = { clip: 'trial_lie_014' };
+let scheduled = false;
+
+function load(id) {
+  if (store[id]) return;
+  store[id] = { status: 'loading', data: [] };
+  fetch(FILES[id]).then((r) => r.json())
+    .then((rows) => { store[id] = { status: 'ok', data: rows, columns: Object.keys(rows[0] || {}) }; rerun(); })
+    .catch((e) => { store[id] = { status: 'error', data: [], message: String(e) }; rerun(); });
+}
+
+window.dash = {
+  data(id) {
+    if (calcs[id]) {
+      const ins = calcs[id].inputs.map((i) => dash.data(i));
+      if (ins.some((d) => d.status !== 'ok')) return { status: 'loading', data: [] };
+      return { status: 'ok', data: calcs[id].fn(...ins.map((d) => d.data)) };
+    }
+    if (!FILES[id]) return { status: 'missing', data: [] };
+    load(id);
+    return store[id];
+  },
+  calc(id, def) { calcs[id] = def; },
+  loader() {},
+  draw(name, fn) {
+    if (fn) { draws[name] = fn; rerun(); return; }
+    drawOne(name);
+  },
+  onData(fn) { onDataFns.push(fn); fn(); },
+  params: () => ({ ...params }),
+  setParams(p) { params = { ...params, ...p }; rerun(); },
+  resetParams() { params = { clip: 'trial_lie_014' }; rerun(); },
+  setLink(name) { history.replaceState(null, '', '#' + name); },
+  refresh() {},
+  colors: ['#007AFF', '#FF3B30', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FF2D55', '#A2845E'],
+};
+
+function visible(el) { return !el.closest('[hidden]'); }
+function drawOne(name) {
+  document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => {
+    if (!visible(el)) return;
+    const d = draws[name];
+    try {
+      if (typeof d === 'function') { d(el); return; }
+      if (!el.__made) el.__made = d.mount(el);
+      d.update(el, el.__made);
+    } catch (e) { console.error('[draw ' + name + ']', e); }
+  });
+}
+function rerun() {
+  if (scheduled) return;
+  scheduled = true;
+  requestAnimationFrame(() => {
+    scheduled = false;
+    onDataFns.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
+    Object.keys(draws).forEach(drawOne);
+  });
+}
+
+// Video analysis needs server.py, so this tab exists only in the local build, not in the claude.ai artifact.
+function addVideoTab(root) {
+  const btn = document.createElement('button');
+  Object.assign(btn, { type: 'button', textContent: 'Video analysis' });
+  btn.setAttribute('role', 'tab');
+  btn.setAttribute('aria-selected', 'false');
+  btn.dataset.tab = 'video';
+  root.querySelector('.ax-seg').appendChild(btn);
+
+  const section = document.createElement('section');
+  Object.assign(section, { id: 'video', className: 'ax-page', hidden: true });
+  section.dataset.page = 'video';
+  const frame = document.createElement('iframe');
+  Object.assign(frame, { src: 'analyze.html?embed=1', title: 'Video analysis' });
+  frame.style.cssText = 'width:100%;border:0;display:block;height:220px;background:transparent';
+  frame.addEventListener('load', () => {
+    const content = frame.contentDocument.querySelector('.wrap');
+    new ResizeObserver(() => { frame.style.height = Math.ceil(content.getBoundingClientRect().height) + 'px'; }).observe(content);
+  });
+  section.appendChild(frame);
+  root.querySelector('#clips').after(section);
+}
+
+fetch('index.html', { cache: 'no-store' }).then((r) => r.text()).then((html) => {
+  const root = document.getElementById('dash-root');
+  root.innerHTML = html;
+  addVideoTab(root);
+  root.querySelectorAll('script').forEach((old) => {
+    const s = document.createElement('script');
+    s.textContent = `{${old.textContent}\n}`;
+    old.replaceWith(s);
+  });
+  if (location.hash === '#video') root.querySelector('.ax-seg button[data-tab="video"]').click();
+  // redraw only when `hidden` actually flips; rewriting the same value must not loop
+  new MutationObserver((ms) => {
+    if (ms.some((m) => (m.oldValue !== null) !== m.target.hasAttribute('hidden'))) rerun();
+  }).observe(root, { attributes: true, subtree: true, attributeFilter: ['hidden'], attributeOldValue: true });
+  addEventListener('resize', rerun);
+  rerun();
+});
+</script>
+</body>
+</html>

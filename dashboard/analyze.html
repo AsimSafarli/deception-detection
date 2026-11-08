@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Analysis Lab</title>
+<style>
+/* Layout: Apple-style large title, a drop zone, then a two-column video + 3D face pair over result cards */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+  --bg: #F2F2F7; --panel: #FFFFFF; --fg: #1D1D1F; --label2: rgba(60, 60, 67, 0.62); --sep: rgba(60, 60, 67, 0.16);
+  --fill: rgba(120, 120, 128, 0.12); --fill-strong: rgba(120, 120, 128, 0.28);
+  --blue: #007AFF; --red: #FF3B30; --orange: #FF9500; --green: #34C759;
+  --fx-face: #E8D6CF; --fx-hot: #FF3B30; --fx-cold: #007AFF; --face-bg: rgba(120, 120, 128, 0.07);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000; --panel: #1C1C1E; --fg: #F5F5F7; --label2: rgba(235, 235, 245, 0.62); --sep: rgba(84, 84, 88, 0.6);
+    --fill: rgba(120, 120, 128, 0.24); --fill-strong: rgba(120, 120, 128, 0.42);
+    --blue: #0A84FF; --red: #FF453A; --orange: #FF9F0A; --green: #30D158;
+    --fx-face: #6B5A55; --fx-hot: #FF453A; --fx-cold: #0A84FF; --face-bg: rgba(120, 120, 128, 0.14);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1180px; margin-inline: auto; padding-block: 32px 56px; padding-left: max(16px, 4vw); padding-right: max(16px, 4vw); display: grid; gap: 20px; }
+.eyebrow { margin: 0; font-size: 13px; font-weight: 600; color: var(--blue); }
+h1 { margin: 4px 0 8px; font-family: var(--display); font-size: clamp(28px, 4.6vw, 40px); font-weight: 700; letter-spacing: -0.022em; line-height: 1.08; }
+.lede { margin: 0; max-width: 64ch; font-size: 17px; line-height: 1.47; color: var(--label2); }
+.lede a, .note a { color: var(--blue); text-decoration: none; }
+.card { background: var(--panel); border: 0.5px solid var(--sep); border-radius: 18px; padding: 20px; min-width: 0; display: grid; gap: 12px; align-content: start; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+.card h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.note { margin: 0; font-size: 13px; line-height: 1.42; color: var(--label2); max-width: 72ch; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.wide { grid-column: 1 / -1; }
+
+.drop { display: grid; place-items: center; gap: 8px; text-align: center; padding: 36px 16px; border-radius: 14px;
+  border: 1.5px dashed var(--fill-strong); background: var(--fill); cursor: pointer; transition: border-color .2s, background .2s; }
+.drop.over { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 10%, transparent); }
+.drop strong { font-size: 17px; font-weight: 600; }
+.drop span { font-size: 13px; color: var(--label2); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.btn { appearance: none; border: 0; border-radius: 999px; background: var(--blue); color: #fff; font: 600 15px/1 var(--font); padding: 11px 20px; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.secondary { background: var(--fill); color: var(--blue); }
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.filename { font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 45%, transparent); outline-offset: 2px; }
+
+.status { display: flex; align-items: center; gap: 12px; font-size: 15px; }
+.spinner { width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--fill-strong); border-top-color: var(--blue); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+.error { padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); font-size: 14px; }
+
+.banner { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.45;
+  background: color-mix(in srgb, var(--orange) 14%, transparent); }
+.banner i { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--orange); }
+
+video { width: 100%; border-radius: 12px; background: #000; display: block; max-height: 520px; }
+.face { position: relative; }
+.fx-canvas { display: block; width: 100%; border-radius: 14px; background: var(--face-bg); cursor: grab; touch-action: pan-y; }
+.fx-canvas:active { cursor: grabbing; }
+.tip { position: absolute; pointer-events: none; background: var(--panel); border: 0.5px solid var(--sep); border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14); padding: 6px 10px; font-size: 12px; line-height: 1.45; white-space: nowrap; }
+.tip div:first-child { color: var(--label2); }
+.time { font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
+.toplist { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13px; min-height: 66px; }
+.toplist li { display: flex; align-items: center; gap: 10px; }
+.num { flex: none; width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; background: var(--red); }
+.au { color: var(--label2); }
+.toplist b { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 12px; margin: 0; }
+.facts div { display: grid; gap: 2px; }
+.facts dt { font-size: 12px; color: var(--label2); }
+.facts dd { margin: 0; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.meters { display: grid; gap: 14px; }
+.meter-row { display: grid; grid-template-columns: minmax(6rem, 9rem) 1fr 4rem; align-items: center; gap: 12px; font-size: 14px; }
+.meter-row b { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.meter { position: relative; height: 8px; border-radius: 4px; background: var(--fill); }
+.meter-fill { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+.meter-mid { position: absolute; left: 50%; top: -4px; bottom: -4px; border-left: 1px solid var(--label2); }
+
+.attn { position: relative; }
+.attn svg { display: block; cursor: pointer; }
+.attn text { fill: var(--label2); font-size: 11px; font-family: var(--font); }
+.moments { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.moments button { width: 100%; text-align: left; appearance: none; border: 0; border-radius: 12px; background: var(--fill); color: var(--fg);
+  font: 14px/1.4 var(--font); padding: 10px 12px; cursor: pointer; display: grid; gap: 2px; }
+.moments button:hover { background: var(--fill-strong); }
+.moments .mt { font-weight: 600; font-variant-numeric: tabular-nums; }
+.moments .mm { font-size: 13px; color: var(--label2); }
+
+.bars { display: grid; gap: 6px; font-size: 13px; }
+.bar-row { display: grid; grid-template-columns: minmax(8rem, 15rem) 1fr 3rem; gap: 10px; align-items: center; }
+.bar-row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { position: relative; height: 12px; }
+.bar-track::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; border-left: 1px solid var(--sep); }
+.bar-fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.bar-row b { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .bar-row { grid-template-columns: 7rem 1fr 2.6rem; } .meter-row { grid-template-columns: 5.5rem 1fr 3.5rem; } }
+.embed body { background: transparent; }
+.embed .wrap { max-width: none; padding: 0 0 4px; }
+.embed .wrap > header, .embed .foot { display: none; }
+.foot { padding-top: 12px; border-top: 0.5px solid var(--sep); font-size: 13px; line-height: 1.45; color: var(--fg); }
+.mail { font-weight: 600; user-select: all; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="face3d.js"></script>
+<script>if (new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');</script>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <p class="eyebrow">Local analysis · the video never leaves this computer</p>
+    <h1>Video Analysis Lab</h1>
+    <p class="lede">Upload a video: every frame is turned into a 3D face mesh and 52 muscle signals, the models run, and the result plays on a 3D face in sync with the video. <a href="local.html">Open the dataset dashboard</a></p>
+  </header>
+
+  <section class="card" id="upload">
+    <h2>Video</h2>
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="video/*">
+      <strong>Drop a video here or choose one</strong>
+      <span>MP4, MOV, AVI, M4V, WEBM, MKV · the face must be clearly visible · the model looks at the first 30 seconds</span>
+    </label>
+    <div class="row" id="chosen" hidden>
+      <span class="filename" id="fname"></span>
+      <button class="btn" id="go" type="button">Analyze</button>
+      <button class="btn secondary" id="reset" type="button">Choose another</button>
+    </div>
+    <div class="status" id="busy" hidden><i class="spinner"></i><span>Processing… <span id="elapsed">0</span> s</span></div>
+    <div class="error" id="err" hidden></div>
+  </section>
+
+  <section id="results" class="grid" hidden>
+    <div class="banner wide"><i></i><span>This is not a verdict. On people they have not seen, these models perform at chance on the Real-life Trial data (AUC 0.45–0.57). Read the probabilities only as a description of model behaviour.</span></div>
+
+    <article class="card">
+      <h2>Video</h2>
+      <video id="video" controls playsinline></video>
+      <dl class="facts">
+        <div><dt>Duration (s)</dt><dd id="f-dur">—</dd></div>
+        <div><dt>Source FPS</dt><dd id="f-fps">—</dd></div>
+        <div><dt>Frames with a face</dt><dd id="f-face">—</dd></div>
+        <div><dt>Seconds seen by the model</dt><dd id="f-win">—</dd></div>
+      </dl>
+      <div class="banner" id="lowfps" hidden><i></i><span>This video is below 25 FPS. A 0.2 s micro-expression spans very few real frames.</span></div>
+    </article>
+
+    <article class="card">
+      <h2>3D face: muscles in sync with the video</h2>
+      <p class="note">Muscle activity every 0.2 s as a z-score against truthful clips: red is above normal, blue below. Drag the face to rotate it.</p>
+      <div class="face" id="face"><div class="tip" id="tip" hidden></div></div>
+      <div class="time" id="ftime">0.0 s</div>
+      <ol class="toplist" id="toplist"></ol>
+    </article>
+
+    <article class="card">
+      <h2>Model probability of "deceptive"</h2>
+      <p class="note">Mean of the 5 fold models. The middle line is 50%.</p>
+      <div class="meters">
+        <div class="meter-row"><span>LSTM + attention</span><div class="meter" data-p="lstm"></div><b data-pv="lstm">—</b></div>
+        <div class="meter-row"><span>Temporal CNN</span><div class="meter" data-p="cnn"></div><b data-pv="cnn">—</b></div>
+        <div class="meter-row"><span>Random Forest</span><div class="meter" data-p="rf"></div><b data-pv="rf">—</b></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>Overall muscle profile</h2>
+      <p class="note">Mean activity over the video, as a z-score against the truthful-clip average.</p>
+      <div class="bars" id="profile"></div>
+    </article>
+
+    <article class="card wide">
+      <h2>Where the model looked</h2>
+      <p class="note">LSTM attention in 0.2 s windows. The dashed line is a uniform spread. Select the chart or a moment below to jump the video there.</p>
+      <div class="attn" id="attn"></div>
+      <ol class="moments" id="moments"></ol>
+    </article>
+  </section>
+  <footer class="foot">For educational purposes only. This is a research prototype, not a lie detector, and must not be used to judge real people. Contact: <span class="mail">asim.safarlii@gmail.com</span></footer>
+</main>
+
+<script>
+const WIN = 0.2;
+const $ = (id) => document.getElementById(id);
+const pct = d3.format('.1%');
+const sgn = d3.format('+.1f');
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let file = null, result = null, face = null, lastIdx = -1, timer = null, rafId = null;
+
+const tip = $('tip');
+face = FaceView($('face'), {
+  onHover: (h) => {
+    if (!h) { tip.hidden = true; return; }
+    tip.replaceChildren(Object.assign(document.createElement('div'), { textContent: h.muscle.muscle + ' · ' + h.muscle.au }),
+      Object.assign(document.createElement('div'), { textContent: 'z ' + sgn(h.value) }));
+    tip.hidden = false;
+    tip.style.left = Math.min(h.x + 12, $('face').clientWidth - tip.offsetWidth) + 'px';
+    tip.style.top = Math.max(0, h.y - tip.offsetHeight - 8) + 'px';
+  },
+});
+Promise.all(['face_vertices', 'face_triangles', 'face_anchors'].map((n) => fetch('upload/' + n + '.json').then((r) => r.json())))
+  .then(([v, t, a]) => { face.setMesh(v, t, a); face.render(); });
+
+const drop = $('drop');
+function choose(f) {
+  if (!f) return;
+  file = f;
+  $('fname').textContent = f.name + ' · ' + d3.format('.1f')(f.size / 1048576) + ' MB';
+  $('chosen').hidden = false;
+  $('err').hidden = true;
+}
+$('file').addEventListener('change', (e) => choose(e.target.files[0]));
+['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => choose(e.dataTransfer.files[0]));
+$('reset').addEventListener('click', () => { file = null; $('file').value = ''; $('chosen').hidden = true; $('results').hidden = true; $('err').hidden = true; });
+
+$('go').addEventListener('click', async () => {
+  if (!file) return;
+  $('go').disabled = true; $('busy').hidden = false; $('err').hidden = true; $('results').hidden = true;
+  const t0 = Date.now();
+  timer = setInterval(() => { $('elapsed').textContent = Math.round((Date.now() - t0) / 1000); }, 500);
+  try {
+    const fd = new FormData();
+    fd.append('video', file);
+    const res = await fetch('/api/analyze', { method: 'POST', body: fd });
+    const data = await res.json().catch(() => ({ error: 'Could not read the server response (HTTP ' + res.status + ').' }));
+    if (!res.ok || data.error) throw new Error(data.error || ('HTTP ' + res.status));
+    result = data;
+    showResults();
+  } catch (e) {
+    $('err').textContent = e.message.includes('Failed to fetch')
+      ? 'Could not reach the server. Check that "python server.py" is running in a terminal.'
+      : e.message;
+    $('err').hidden = false;
+  } finally {
+    clearInterval(timer); $('busy').hidden = true; $('go').disabled = false;
+  }
+});
+
+function showResults() {
+  const r = result;
+  $('results').hidden = false;
+  const video = $('video');
+  video.src = URL.createObjectURL(file);
+  $('f-dur').textContent = d3.format('.1f')(r.duration_s);
+  $('f-fps').textContent = r.source_fps;
+  $('f-face').textContent = pct(r.face_ratio);
+  $('f-win').textContent = d3.format('.1f')(r.model_window_s);
+  $('lowfps').hidden = !(r.source_fps < 25);
+
+  document.querySelectorAll('[data-p]').forEach((m) => {
+    const p = r.probs[m.dataset.p];
+    m.replaceChildren(Object.assign(document.createElement('div'), { className: 'meter-fill' }), Object.assign(document.createElement('div'), { className: 'meter-mid' }));
+    m.firstChild.style.width = p * 100 + '%';
+    m.firstChild.style.background = p >= 0.5 ? 'var(--red)' : 'var(--blue)';
+  });
+  document.querySelectorAll('[data-pv]').forEach((b) => { b.textContent = pct(r.probs[b.dataset.pv]); });
+
+  drawProfile();
+  drawAttention();
+  drawMoments();
+  lastIdx = -1;
+  syncFace(0);
+  cancelAnimationFrame(rafId);
+  const loop = () => { syncFace(video.currentTime); rafId = requestAnimationFrame(loop); };
+  rafId = requestAnimationFrame(loop);
+  $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function syncFace(t) {
+  if (!result || !result.timeline.length) return;
+  const i = Math.max(0, Math.min(result.timeline.length - 1, Math.floor(t / WIN)));
+  if (i === lastIdx) return;
+  lastIdx = i;
+  const vals = result.timeline[i].z;
+  const top = face.setValues(vals, 2.5);
+  $('ftime').textContent = d3.format('.1f')(result.timeline[i].t) + ' s';
+  $('toplist').replaceChildren(...top.map((mi, k) => {
+    const li = document.createElement('li');
+    const m = result.muscles[mi];
+    li.append(Object.assign(document.createElement('span'), { className: 'num', textContent: k + 1 }));
+    const name = Object.assign(document.createElement('span'), { textContent: m.muscle + ' ' });
+    name.append(Object.assign(document.createElement('span'), { className: 'au', textContent: m.au }));
+    li.append(name, Object.assign(document.createElement('b'), { textContent: 'z ' + sgn(vals[mi]) }));
+    return li;
+  }));
+}
+
+function drawProfile() {
+  const rows = result.muscles.map((m, i) => ({ ...m, z: result.profile[i] })).sort((a, b) => b.z - a.z);
+  const ext = Math.max(2.5, d3.max(rows, (r) => Math.abs(r.z)));
+  $('profile').replaceChildren(...rows.map((r) => {
+    const row = Object.assign(document.createElement('div'), { className: 'bar-row' });
+    const label = Object.assign(document.createElement('span'), { textContent: r.muscle + ' ' });
+    label.title = r.muscle + ' · ' + r.au;
+    label.append(Object.assign(document.createElement('span'), { className: 'au', textContent: r.au }));
+    const track = Object.assign(document.createElement('div'), { className: 'bar-track' });
+    const fill = Object.assign(document.createElement('div'), { className: 'bar-fill' });
+    const w = Math.abs(r.z) / ext * 50;
+    fill.style.left = (r.z >= 0 ? 50 : 50 - w) + '%';
+    fill.style.width = Math.max(0.5, w) + '%';
+    fill.style.background = r.z >= 1 ? 'var(--red)' : r.z <= -1 ? 'var(--blue)' : 'var(--fill-strong)';
+    track.append(fill);
+    row.append(label, track, Object.assign(document.createElement('b'), { textContent: sgn(r.z) }));
+    return row;
+  }));
+}
+
+function seek(t) { const v = $('video'); v.currentTime = t; syncFace(t); v.play().catch(() => {}); }
+
+function drawAttention() {
+  const el = $('attn');
+  el.replaceChildren();
+  const rows = result.attention;
+  if (!rows.length) return;
+  const W = Math.max(280, el.clientWidth || 700), H = 180, mt = 20, mb = 24, mr = 8;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const uniform = 1 / rows.length;
+  const y = d3.scaleLinear([0, Math.max(d3.max(rows, (r) => r.weight), uniform) * 1.15], [H - mb, mt]).nice();
+  const probe = svg.append('text');
+  const ml = d3.max(y.ticks(4), (t) => probe.text(d3.format('.1%')(t)).node().getComputedTextLength()) + 10;
+  probe.remove();
+  const x = d3.scaleLinear([0, d3.max(rows, (r) => r.t) + WIN], [ml, W - mr]);
+  svg.append('g').selectAll('line').data(y.ticks(4)).join('line').attr('x1', ml).attr('x2', W - mr)
+    .attr('y1', (t) => y(t)).attr('y2', (t) => y(t)).attr('stroke', 'var(--sep)');
+  svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('x', ml - 6).attr('y', (t) => y(t)).attr('dy', '0.35em').attr('text-anchor', 'end').text(d3.format('.1%'));
+  svg.append('g').selectAll('text').data(x.ticks(W < 480 ? 4 : 8)).join('text').attr('x', (t) => x(t)).attr('y', H - 6).attr('text-anchor', 'middle').text((t) => t + ' s');
+  const bw = Math.max(1, x(WIN) - x(0) - 0.5);
+  svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', (r) => x(r.t)).attr('width', bw)
+    .attr('y', (r) => y(r.weight)).attr('height', (r) => y(0) - y(r.weight)).attr('fill', 'var(--blue)').attr('opacity', 0.85);
+  svg.append('line').attr('x1', ml).attr('x2', W - mr).attr('y1', y(uniform)).attr('y2', y(uniform))
+    .attr('stroke', 'var(--label2)').attr('stroke-dasharray', '4 3').attr('stroke-width', 1.5);
+  const mk = svg.append('g').selectAll('g').data(result.moments).join('g').attr('transform', (m) => `translate(${x(m.t) + bw / 2},${mt - 9})`);
+  mk.append('circle').attr('r', 8).attr('fill', 'var(--red)');
+  mk.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em').style('fill', '#fff').style('font-weight', 700).text((_, i) => i + 1);
+  svg.append('rect').attr('x', ml).attr('y', 0).attr('width', W - mr - ml).attr('height', H - mb).attr('fill', 'transparent')
+    .on('click', (ev) => seek(Math.max(0, x.invert(d3.pointer(ev)[0]))));
+}
+
+function drawMoments() {
+  $('moments').replaceChildren(...result.moments.map((m, i) => {
+    const li = document.createElement('li');
+    const b = Object.assign(document.createElement('button'), { type: 'button' });
+    b.append(Object.assign(document.createElement('span'), { className: 'mt', textContent: (i + 1) + ' · ' + d3.format('.1f')(m.t) + ' s' }),
+      Object.assign(document.createElement('span'), { className: 'mm', textContent: m.muscles.map((x) => x.muscle + ' ' + x.au + ' (z ' + sgn(x.z) + ')').join(' · ') }));
+    b.addEventListener('click', () => seek(m.t));
+    li.append(b);
+    return li;
+  }));
+}
+
+addEventListener('resize', () => { face.render(); if (result) drawAttention(); });
+</script>
+</body>
+</html>

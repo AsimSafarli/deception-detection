@@ -1,0 +1,802 @@
+<meta name="dash-one-writer">
+<style>
+/* Layout: Apple-style grouped inset cards under a large title, a segmented control switches three views */
+.ax {
+  --ax-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --ax-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+  --ax-blue: #007AFF;
+  --ax-red: #FF3B30;
+  --ax-orange: #FF9500;
+  --ax-fill: rgba(120, 120, 128, 0.12);
+  --ax-fill-strong: rgba(120, 120, 128, 0.28);
+  --ax-sep: rgba(60, 60, 67, 0.16);
+  --ax-label2: rgba(60, 60, 67, 0.62);
+  --ax-seg-on: #FFFFFF;
+  --ax-face: #E8D6CF;
+  --ax-face-bg: rgba(120, 120, 128, 0.07);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ax {
+    --ax-blue: #0A84FF; --ax-red: #FF453A; --ax-orange: #FF9F0A;
+    --ax-fill: rgba(120, 120, 128, 0.24); --ax-fill-strong: rgba(120, 120, 128, 0.42);
+    --ax-sep: rgba(84, 84, 88, 0.6); --ax-label2: rgba(235, 235, 245, 0.62); --ax-seg-on: #636366;
+    --ax-face: #6B5A55; --ax-face-bg: rgba(120, 120, 128, 0.14);
+  }
+}
+:root[data-theme="dark"] .ax {
+  --ax-blue: #0A84FF; --ax-red: #FF453A; --ax-orange: #FF9F0A;
+  --ax-fill: rgba(120, 120, 128, 0.24); --ax-fill-strong: rgba(120, 120, 128, 0.42);
+  --ax-sep: rgba(84, 84, 88, 0.6); --ax-label2: rgba(235, 235, 245, 0.62); --ax-seg-on: #636366;
+  --ax-face: #6B5A55; --ax-face-bg: rgba(120, 120, 128, 0.14);
+}
+
+.ax [hidden] { display: none !important; }
+.ax { font-family: var(--ax-font); color: var(--color-fg); max-width: 1180px; margin-inline: auto;
+  display: grid; gap: 24px; padding-block: 4px 40px; -webkit-font-smoothing: antialiased; }
+.ax .ax-eyebrow { margin: 0; font-size: 13px; font-weight: 600; color: var(--ax-blue); letter-spacing: 0.01em; }
+.ax .ax-title { margin: 4px 0 10px; font-family: var(--ax-display); font-size: clamp(28px, 4.6vw, 40px);
+  font-weight: 700; letter-spacing: -0.022em; line-height: 1.08; text-wrap: balance; }
+.ax .ax-lede { margin: 0; max-width: 66ch; font-size: 17px; line-height: 1.47; color: var(--ax-label2); }
+.ax .ax-lede b { color: var(--color-fg); font-weight: 600; }
+
+.ax-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: var(--ax-fill); justify-self: start; max-width: 100%; overflow-x: auto; }
+.ax-seg button { appearance: none; border: 0; background: transparent; color: var(--color-fg); font: 500 13px/1 var(--ax-font);
+  padding: 8px 16px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.ax-seg button[aria-selected="true"] { background: var(--ax-seg-on); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04); font-weight: 600; }
+.ax-seg button:focus-visible, .ax button:focus-visible, .ax select:focus-visible, .ax input:focus-visible { outline: 3px solid color-mix(in srgb, var(--ax-blue) 45%, transparent); outline-offset: 1px; }
+
+.ax-page { display: grid; gap: 16px; }
+.ax-section-title { margin: 12px 0 0; font-family: var(--ax-display); font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+.ax-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.ax-kpis { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+
+.ax-card { background: var(--color-panel); border: 0.5px solid var(--ax-sep); border-radius: 18px; padding: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); min-width: 0; display: grid; gap: 12px; align-content: start; }
+.ax-card h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.ax .ax-note { margin: 0; font-size: 13px; line-height: 1.42; color: var(--ax-label2); max-width: 70ch; }
+.ax .ax-note b { color: var(--color-fg); font-weight: 600; }
+.ax-wide { grid-column: 1 / -1; }
+
+.ax-kpi-name { margin: 0; font-size: 13px; font-weight: 600; color: var(--ax-label2); }
+.ax-kpi-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ax .ax-big { font-family: var(--ax-display); font-size: 34px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+.ax-kpi-unit { font-size: 13px; color: var(--ax-label2); }
+.ax-kpi-sub { margin: 0; font-size: 13px; color: var(--ax-label2); font-variant-numeric: tabular-nums; }
+.ax-kpi-sub b { color: var(--color-fg); font-weight: 600; }
+
+.ax-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ax-label2); }
+.ax-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ax-sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.ax-sw-red { background: var(--ax-red); } .ax-sw-blue { background: var(--ax-blue); } .ax-sw-gray { background: var(--ax-fill-strong); }
+.ax-sw-line { width: 14px; height: 0; border-top: 1.5px dashed var(--ax-label2); border-radius: 0; }
+
+.ax-chart { position: relative; min-width: 0; }
+.ax-chart svg { display: block; }
+.ax-chart text { fill: var(--ax-label2); font-family: var(--ax-font); font-size: 11px; }
+.ax-chart .ax-lbl { fill: var(--color-fg); font-size: 12px; }
+.ax-chart .ax-lbl tspan.ax-au { fill: var(--ax-label2); font-size: 11px; }
+.ax-tip { position: absolute; pointer-events: none; z-index: 2; background: var(--cds-surface-popover); border: 1px solid var(--cds-border);
+  border-radius: 10px; box-shadow: var(--cds-shadow-popover); padding: 6px 10px; font-size: 12px; line-height: 1.45;
+  white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ax-tip .ax-tip-h { color: var(--ax-label2); }
+
+.ax-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.ax-picker label { font-size: 13px; font-weight: 600; color: var(--ax-label2); }
+.ax select, .ax input[type="search"] { font: 15px/1.2 var(--ax-font); color: var(--color-fg); background: var(--ax-fill); border: 0;
+  border-radius: 10px; padding: 9px 12px; min-width: 0; max-width: 100%; }
+.ax-pill { display: inline-flex; align-items: center; padding: 4px 11px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  color: var(--ax-blue); background: color-mix(in srgb, var(--ax-blue) 14%, transparent); }
+.ax-pill.is-dec { color: var(--ax-red); background: color-mix(in srgb, var(--ax-red) 14%, transparent); }
+.ax-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 12px; margin: 0; }
+.ax-facts div { display: grid; gap: 2px; }
+.ax-facts dt { font-size: 12px; color: var(--ax-label2); }
+.ax-facts dd { margin: 0; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ax-warn { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; font-size: 13px; line-height: 1.42;
+  background: color-mix(in srgb, var(--ax-orange) 14%, transparent); }
+.ax-warn-dot { flex: none; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: var(--ax-orange); }
+
+.ax-meters { display: grid; gap: 14px; }
+.ax-meter-row { display: grid; grid-template-columns: minmax(6rem, 9rem) 1fr 4rem; align-items: center; gap: 12px; font-size: 14px; }
+.ax-meter-row b { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ax-meter { position: relative; height: 8px; border-radius: 4px; background: var(--ax-fill); }
+.ax-meter-fill { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+.ax-meter-mid { position: absolute; left: 50%; top: -4px; bottom: -4px; border-left: 1px solid var(--ax-label2); }
+
+.ax-scroll { max-height: 520px; overflow: auto; border-radius: 12px; }
+.ax-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ax-table th { position: sticky; top: 0; background: var(--color-panel); text-align: left; font-size: 12px; font-weight: 600;
+  color: var(--ax-label2); padding: 8px 12px; border-bottom: 0.5px solid var(--ax-sep); white-space: nowrap; }
+.ax-table th button { appearance: none; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.ax-table th[aria-sort="ascending"] button::after { content: " ↑"; }
+.ax-table th[aria-sort="descending"] button::after { content: " ↓"; }
+.ax-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--ax-sep); white-space: nowrap; }
+.ax-table .ax-num { text-align: right; }
+.ax-clickable tbody tr { cursor: pointer; }
+.ax-clickable tbody tr:hover { background: var(--ax-fill); }
+.ax-table tr.is-sel { background: color-mix(in srgb, var(--ax-blue) 12%, transparent); }
+.ax-hide-narrow { }
+@media (max-width: 640px) { .ax-hide-narrow { display: none; } .ax-meter-row { grid-template-columns: 5.5rem 1fr 3.5rem; } }
+
+.ax-face { position: relative; }
+.ax-face-canvas { display: block; width: 100%; border-radius: 14px; background: var(--ax-face-bg); cursor: grab; touch-action: pan-y; }
+.ax-face-canvas:active { cursor: grabbing; }
+.ax-face-ctrl { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ax-face-ctrl input[type="range"] { flex: 1 1 12rem; min-width: 0; accent-color: var(--ax-blue); }
+.ax-face-time { font-size: 13px; color: var(--ax-label2); font-variant-numeric: tabular-nums; min-width: 7.5rem; text-align: right; }
+.ax-btn { appearance: none; border: 0; border-radius: 999px; background: var(--ax-blue); color: #fff; font: 600 13px/1 var(--ax-font);
+  padding: 9px 16px; cursor: pointer; min-width: 6.5rem; }
+.ax-face-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13px; }
+.ax-face-list li { display: flex; align-items: center; gap: 10px; }
+.ax-face-num { flex: none; width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: #fff; background: var(--ax-red); }
+.ax-face-list .ax-face-au { color: var(--ax-label2); }
+.ax-face-list b { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.ax-foot { display: grid; gap: 8px; padding-top: 8px; border-top: 0.5px solid var(--ax-sep); }
+.ax-foot h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.ax-foot ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; line-height: 1.42; color: var(--ax-label2); max-width: 80ch; }
+.ax .ax-edu { color: var(--color-fg); }
+.ax .ax-mail { font-weight: 600; user-select: all; }
+.ax code { font: 12px ui-monospace, "SF Mono", Menlo, monospace; }
+
+.ax [data-dash-source-state="refreshing"] { opacity: 0.5; transition: opacity var(--cds-dur-slow); }
+.ax [data-dash-source-state="empty"] { color: transparent; }
+@media (prefers-reduced-motion: no-preference) {
+  .ax-meter-fill { transition: width var(--cds-dur-slow) var(--cds-ease-out); }
+}
+</style>
+
+<div class="ax">
+  <header>
+    <p class="ax-eyebrow">Real-life Trial dataset · MediaPipe 3D face model · <b data-draw="const" data-const="fps">—</b> FPS</p>
+    <h1 class="ax-title">Facial Muscle Deception Lab</h1>
+    <p class="ax-lede">The best model, <b data-draw="v" data-source="best_model" data-field="model" data-row="0">—</b>, reaches an AUC of <b data-draw="v" data-source="best_model" data-field="auc" data-row="0" data-fmt="f2">—</b> on court cases it never saw, while chance is <b data-draw="const" data-const="chance" data-fmt="f2">—</b>. In this data, facial muscle activity does not separate lies from truth in a way that carries over to new people.</p>
+  </header>
+
+  <nav class="ax-seg" role="tablist" aria-label="View">
+    <button type="button" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button type="button" role="tab" data-tab="explorer" aria-selected="false">Clip explorer</button>
+    <button type="button" role="tab" data-tab="clips" aria-selected="false">All clips</button>
+  </nav>
+
+  <section id="overview" class="ax-page" data-page="overview">
+    <h2 class="ax-section-title">Model results</h2>
+    <p class="ax-note">Each clip is scored by a model that never saw it (out-of-fold). Clips from one court case are never split between training and test.</p>
+    <div class="ax-kpis" id="model-cards">
+      <article class="ax-card">
+        <p class="ax-kpi-name" data-draw="v" data-source="models" data-field="model" data-row="0">—</p>
+        <div class="ax-kpi-row"><span class="ax-big" data-draw="v" data-source="models" data-field="auc" data-row="0" data-fmt="f2">—</span><span class="ax-kpi-unit">AUC</span></div>
+        <p class="ax-kpi-sub">Accuracy <b data-draw="v" data-source="models" data-field="accuracy" data-row="0" data-fmt="pct">—</b></p>
+      </article>
+      <article class="ax-card">
+        <p class="ax-kpi-name" data-draw="v" data-source="models" data-field="model" data-row="1">—</p>
+        <div class="ax-kpi-row"><span class="ax-big" data-draw="v" data-source="models" data-field="auc" data-row="1" data-fmt="f2">—</span><span class="ax-kpi-unit">AUC</span></div>
+        <p class="ax-kpi-sub">Accuracy <b data-draw="v" data-source="models" data-field="accuracy" data-row="1" data-fmt="pct">—</b></p>
+      </article>
+      <article class="ax-card">
+        <p class="ax-kpi-name" data-draw="v" data-source="models" data-field="model" data-row="2">—</p>
+        <div class="ax-kpi-row"><span class="ax-big" data-draw="v" data-source="models" data-field="auc" data-row="2" data-fmt="f2">—</span><span class="ax-kpi-unit">AUC</span></div>
+        <p class="ax-kpi-sub">Accuracy <b data-draw="v" data-source="models" data-field="accuracy" data-row="2" data-fmt="pct">—</b></p>
+      </article>
+    </div>
+
+    <h2 class="ax-section-title">Which muscles differ</h2>
+    <article class="ax-card" id="face-global">
+      <h2>3D face map</h2>
+      <p class="ax-note">Mean 3D face model. Muscles in red regions are more active in deceptive clips, those in blue regions in truthful clips. Only muscles with p &lt; <b data-draw="const" data-const="alpha">—</b> are coloured. Drag to rotate.</p>
+      <div class="ax-chart" data-draw="face-global" data-source="face_vertices face_triangles face_anchors muscles_global"></div>
+    </article>
+    <article class="ax-card" id="muscle-diff">
+      <h2>Muscle differences between deceptive and truthful clips</h2>
+      <p class="ax-note">Cliff's delta: a positive value means the muscle is more active in deceptive clips. <b data-draw="v" data-source="sig_muscles" data-field="n" data-row="0">—</b> / <b data-draw="v" data-source="sig_muscles" data-field="total" data-row="0">—</b> muscle groups differ at p &lt; <b data-draw="const" data-const="alpha">—</b>.</p>
+      <div class="ax-legend">
+        <span><i class="ax-sw ax-sw-red"></i>Higher in deceptive, significant</span>
+        <span><i class="ax-sw ax-sw-blue"></i>Higher in truthful, significant</span>
+        <span><i class="ax-sw ax-sw-gray"></i>Not significant</span>
+      </div>
+      <div class="ax-chart" data-draw="global-chart" data-source="muscles_global"></div>
+      <p class="ax-note">Caution: this test treats every clip as independent, yet one court case contributes up to <b data-draw="v" data-source="largest_case" data-field="n" data-row="0">—</b> clips. The differences mostly reflect the faces of specific people, which is why the models stay at chance on unseen cases.</p>
+    </article>
+  </section>
+
+  <section id="explorer" class="ax-page" data-page="explorer" hidden>
+    <article class="ax-card" id="clip-head">
+      <div class="ax-picker">
+        <label for="ax-clip">Clip</label>
+        <select id="ax-clip" data-draw="clip-select" data-source="clips"></select>
+        <span class="ax-pill" data-draw="v" data-source="clips" data-field="label" data-scope="clip" data-pill>—</span>
+      </div>
+      <dl class="ax-facts">
+        <div><dt>Court case</dt><dd data-draw="v" data-source="clips" data-field="case" data-scope="clip">—</dd></div>
+        <div><dt>Test fold</dt><dd data-draw="v" data-source="clips" data-field="fold" data-scope="clip">—</dd></div>
+        <div><dt>Duration (s)</dt><dd data-draw="v" data-source="clips" data-field="duration_s" data-scope="clip">—</dd></div>
+        <div><dt>Source FPS</dt><dd data-draw="v" data-source="clips" data-field="source_fps" data-scope="clip">—</dd></div>
+      </dl>
+      <div class="ax-warn ax-lowfps" hidden>
+        <i class="ax-warn-dot"></i>
+        <span>This video is below <b data-draw="const" data-const="lowfps">—</b> FPS. A <b data-draw="const" data-const="win">—</b> s micro-expression spans very few real frames, and interpolating to 30 FPS adds no information.</span>
+      </div>
+    </article>
+
+    <div class="ax-grid">
+      <article class="ax-card ax-wide" id="face-clip">
+        <h2>3D face: muscles over time</h2>
+        <p class="ax-note">Muscle activity in each <b data-draw="const" data-const="win">—</b> s window, as a z-score against truthful clips: red is above normal, blue below. Numbered markers are the 3 most active muscles at that moment. Press play or drag the slider; drag the face to rotate it.</p>
+        <div class="ax-chart" data-draw="face-clip" data-source="face_vertices face_triangles face_anchors clip_muscle_timeline"></div>
+      </article>
+
+      <article class="ax-card" id="clip-probs">
+        <h2>Model probability of "deceptive"</h2>
+        <p class="ax-note">Prediction made while the clip was in the test fold. The middle line is 50%.</p>
+        <div class="ax-meters">
+          <div class="ax-meter-row"><span>LSTM + attention</span><div class="ax-meter" data-draw="meter" data-source="clips" data-col="prob_lstm"></div><b data-draw="v" data-source="clips" data-field="prob_lstm" data-scope="clip" data-fmt="pct">—</b></div>
+          <div class="ax-meter-row"><span>Temporal CNN</span><div class="ax-meter" data-draw="meter" data-source="clips" data-col="prob_cnn"></div><b data-draw="v" data-source="clips" data-field="prob_cnn" data-scope="clip" data-fmt="pct">—</b></div>
+          <div class="ax-meter-row"><span>Random Forest</span><div class="ax-meter" data-draw="meter" data-source="clips" data-col="prob_rf"></div><b data-draw="v" data-source="clips" data-field="prob_rf" data-scope="clip" data-fmt="pct">—</b></div>
+        </div>
+      </article>
+
+      <article class="ax-card" id="clip-muscles">
+        <h2>Muscle profile of this clip</h2>
+        <p class="ax-note">Each muscle's mean activity over the clip, as a z-score against the truthful-clip average.</p>
+        <div class="ax-legend">
+          <span><i class="ax-sw ax-sw-red"></i>z ≥ 1</span>
+          <span><i class="ax-sw ax-sw-blue"></i>z ≤ −1</span>
+          <span><i class="ax-sw ax-sw-gray"></i>normal range</span>
+        </div>
+        <div class="ax-chart" data-draw="clip-muscles" data-source="clip_muscles"></div>
+      </article>
+
+      <article class="ax-card ax-wide" id="clip-attention">
+        <h2>Where the model looked</h2>
+        <p class="ax-note">LSTM attention in <b data-draw="const" data-const="win">—</b> s windows (<b data-draw="const" data-const="winframes">—</b> frames). The dashed line is a uniform spread: bars close to it mean the model did not single out a moment. Numbers mark the 3 strongest moments.</p>
+        <div class="ax-legend">
+          <span><i class="ax-sw ax-sw-blue"></i>Attention weight</span>
+          <span><i class="ax-sw ax-sw-line"></i>Uniform spread</span>
+        </div>
+        <div class="ax-chart" data-draw="clip-attn" data-source="clip_attention clip_moments"></div>
+      </article>
+
+      <article class="ax-card ax-wide" id="clip-moments">
+        <h2>Muscles active at the top moments</h2>
+        <p class="ax-note">For each moment, the 3 muscles that rise most above this clip's own average (z-score).</p>
+        <div class="ax-scroll">
+          <table class="ax-table" data-source="clip_moments" data-row-key="key">
+            <thead><tr>
+              <th data-field="moment">Moment</th>
+              <th data-field="t" class="ax-num">Time (s)</th>
+              <th data-field="muscle">Muscle</th>
+              <th data-field="au">FACS AU</th>
+              <th data-field="z" class="ax-num">z</th>
+            </tr></thead>
+            <tbody data-draw="moments-body"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="clips" class="ax-page" data-page="clips" hidden>
+    <article class="ax-card" id="clip-table">
+      <h2>All clips</h2>
+      <p class="ax-note">Select a row to open that clip in Clip explorer. Probabilities are out-of-fold predictions.</p>
+      <input type="search" id="ax-q" placeholder="Search ID, label or case" aria-label="Search clips">
+      <div class="ax-scroll">
+        <table class="ax-table ax-clickable" data-source="clips" data-row-key="id">
+          <thead><tr>
+            <th data-field="id"><button type="button" data-sort="id">Clip</button></th>
+            <th data-field="label"><button type="button" data-sort="label">Label</button></th>
+            <th data-field="case" class="ax-hide-narrow"><button type="button" data-sort="case">Case</button></th>
+            <th data-field="fold" class="ax-num ax-hide-narrow"><button type="button" data-sort="fold">Fold</button></th>
+            <th data-field="prob_lstm" class="ax-num"><button type="button" data-sort="prob_lstm">LSTM</button></th>
+            <th data-field="prob_cnn" class="ax-num ax-hide-narrow"><button type="button" data-sort="prob_cnn">CNN</button></th>
+            <th data-field="prob_rf" class="ax-num"><button type="button" data-sort="prob_rf">RF</button></th>
+          </tr></thead>
+          <tbody data-draw="clips-body"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <footer class="ax-foot">
+    <h2>Method</h2>
+    <ul>
+      <li>Every frame is processed with MediaPipe Face Landmarker: a 478-point 3D mesh, 52 blendshapes and head pose. No frames are skipped, then all videos are resampled to one frame rate.</li>
+      <li>Blendshapes are mapped to FACS action units and facial muscles (for example AU12 zygomaticus major, AU4 corrugator supercilii). A camera cannot measure muscles directly; this is an estimate from skin-surface motion.</li>
+      <li>Evaluation uses 5-fold StratifiedGroupKFold grouped by court case. Normalization and early stopping use only the training groups.</li>
+      <li>No face was found in any frame of these clips, so they are excluded: trial_lie_045, trial_lie_049, trial_lie_059, trial_truth_016, trial_truth_017, trial_truth_041.</li>
+      <li>No names are shown; court cases appear as anonymous codes (case_01…).</li>
+    </ul>
+    <p class="ax-note ax-edu">For educational purposes only. This is a research prototype, not a lie detector, and must not be used to judge real people. Contact: <span class="ax-mail">asim.safarlii@gmail.com</span></p>
+  </footer>
+</div>
+
+<script>
+const FPS = 30, WIN_S = 0.2, CHANCE = 0.5, ALPHA = 0.05, LOW_FPS = 25, DEFAULT_CLIP = 'trial_lie_014';
+const CONSTS = { fps: FPS, win: WIN_S, winframes: Math.round(FPS * WIN_S), chance: CHANCE, alpha: ALPHA, lowfps: LOW_FPS };
+const FMT = { f2: d3.format('.2f'), pct: d3.format('.1%') };
+const fmt = (k, v) => (FMT[k] || String)(v);
+const enc = (s) => String(s).replace(/%/g, '%25').replace(/&/g, '%26').replace(/=/g, '%3D');
+const css = (name) => getComputedStyle(document.querySelector('.ax')).getPropertyValue(name).trim();
+const clipId = () => dash.params().clip || DEFAULT_CLIP;
+
+dash.calc('best_model', {
+  inputs: ['models'],
+  title: 'Best model by AUC',
+  description: 'The model with the highest pooled out-of-fold AUC.',
+  fn: (models) => [models.reduce((a, b) => (b.auc > a.auc ? b : a))],
+});
+dash.calc('sig_muscles', {
+  inputs: ['muscles_global'],
+  title: 'Muscle groups with p < 0.05',
+  description: 'Count of muscle groups whose Mann-Whitney p-value is below 0.05, and the total number of groups.',
+  fn: (muscles_global) => [{ n: muscles_global.filter((r) => r.p_value < 0.05).length, total: muscles_global.length }],
+});
+
+dash.calc('largest_case', {
+  inputs: ['clips'],
+  title: 'Clips in the largest case',
+  description: 'Number of clips in the court case with the most clips.',
+  fn: (clips) => {
+    const counts = {};
+    clips.forEach((r) => { counts[r.case] = (counts[r.case] || 0) + 1; });
+    return [{ n: Math.max(...Object.values(counts)) }];
+  },
+});
+
+dash.draw('v', (el) => {
+  const d = dash.data(el.dataset.source);
+  if (d.status !== 'ok') { el.textContent = '—'; return; }
+  let row;
+  if (el.dataset.scope === 'clip') {
+    const id = clipId();
+    el.setAttribute('data-where', 'id=' + enc(id));
+    row = d.data.find((r) => r.id === id);
+  } else {
+    row = d.data[+(el.dataset.row || 0)];
+  }
+  const val = row ? row[el.dataset.field] : null;
+  el.textContent = val == null ? '—' : fmt(el.dataset.fmt, val);
+  if (el.dataset.pill !== undefined) el.classList.toggle('is-dec', val === 'Deceptive');
+});
+dash.draw('const', (el) => { el.textContent = fmt(el.dataset.fmt, CONSTS[el.dataset.const]); });
+
+function tipFor(el) {
+  const tip = document.createElement('div');
+  tip.className = 'ax-tip';
+  tip.hidden = true;
+  el.appendChild(tip);
+  return {
+    show(lines, x, y) {
+      tip.replaceChildren(...lines.map((l, i) => { const d = document.createElement('div'); if (i === 0) d.className = 'ax-tip-h'; d.textContent = l; return d; }));
+      tip.hidden = false;
+      const w = tip.offsetWidth, h = tip.offsetHeight, W = el.clientWidth;
+      tip.style.left = Math.max(0, Math.min(W - w, x + 12)) + 'px';
+      tip.style.top = Math.max(0, y - h - 8) + 'px';
+    },
+    hide() { tip.hidden = true; },
+  };
+}
+
+function hbars(el, rows, opt) {
+  el.replaceChildren();
+  if (!rows.length) return;
+  const W = Math.max(280, el.clientWidth || 600), rowH = 26, axisH = 24, H = rows.length * rowH + axisH;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img');
+  const probe = svg.append('text').attr('class', 'ax-lbl');
+  let maxW = 0;
+  rows.forEach((r) => { probe.text(r.muscle + '  ' + r.au); maxW = Math.max(maxW, probe.node().getComputedTextLength()); });
+  probe.remove();
+  const labelW = Math.min(maxW + 10, W * 0.48);
+  const m = opt.extent;
+  const x = d3.scaleLinear([-m, m], [labelW + 8, W - 12]);
+
+  const ticks = x.ticks(W < 480 ? 4 : 6);
+  svg.append('g').selectAll('line').data(ticks).join('line')
+    .attr('x1', (t) => x(t)).attr('x2', (t) => x(t)).attr('y1', 0).attr('y2', rows.length * rowH)
+    .attr('stroke', t => t === 0 ? 'var(--cds-chart-axis)' : 'var(--cds-chart-grid)').attr('stroke-width', 1);
+  svg.append('g').selectAll('text').data(ticks).join('text')
+    .attr('x', (t) => x(t)).attr('y', rows.length * rowH + 16).attr('text-anchor', 'middle').text(opt.tickFmt);
+
+  const g = svg.append('g').selectAll('g').data(rows).join('g').attr('transform', (_, i) => `translate(0,${i * rowH})`);
+  g.append('text').attr('class', 'ax-lbl').attr('x', labelW).attr('y', rowH / 2).attr('dy', '0.35em').attr('text-anchor', 'end')
+    .each(function (r) {
+      const t = d3.select(this);
+      t.append('tspan').text(r.muscle);
+      t.append('tspan').attr('class', 'ax-au').text('  ' + r.au);
+      let name = r.muscle;
+      while (this.getComputedTextLength() > labelW && name.length > 4) {
+        name = name.slice(0, -2);
+        t.select('tspan').text(name + '…');
+      }
+    });
+  g.append('rect')
+    .attr('x', (r) => x(Math.min(0, opt.value(r)))).attr('y', 6).attr('height', rowH - 12)
+    .attr('width', (r) => Math.max(1, Math.abs(x(opt.value(r)) - x(0)))).attr('rx', 4)
+    .attr('fill', opt.color);
+  const tip = tipFor(el);
+  g.append('rect').attr('x', 0).attr('y', 0).attr('width', W).attr('height', rowH).attr('fill', 'transparent')
+    .on('pointermove', (ev, r) => { const [px, py] = d3.pointer(ev, el); tip.show(opt.tip(r), px, py); })
+    .on('pointerleave', () => tip.hide());
+}
+
+const blue = () => css('--ax-blue'), red = () => css('--ax-red'), gray = () => css('--ax-fill-strong');
+
+dash.draw('global-chart', (el) => {
+  const d = dash.data('muscles_global');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const rows = [...d.data].sort((a, b) => b.cliffs_delta - a.cliffs_delta);
+  const ext = Math.max(0.5, d3.max(rows, (r) => Math.abs(r.cliffs_delta)) * 1.1);
+  hbars(el, rows, {
+    extent: ext, value: (r) => r.cliffs_delta, tickFmt: d3.format('.1f'),
+    color: (r) => (r.p_value < ALPHA ? (r.cliffs_delta > 0 ? red() : blue()) : gray()),
+    tip: (r) => [r.muscle + ' · ' + r.au, "Cliff's δ " + d3.format('+.2f')(r.cliffs_delta), 'p = ' + d3.format('.4f')(r.p_value)],
+  });
+});
+
+dash.draw('clip-muscles', (el) => {
+  const d = dash.data('clip_muscles');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const id = clipId();
+  const rows = d.data.filter((r) => r.id === id).sort((a, b) => b.z - a.z);
+  const ext = Math.max(2.5, d3.max(rows, (r) => Math.abs(r.z)) * 1.1 || 2.5);
+  hbars(el, rows, {
+    extent: ext, value: (r) => r.z, tickFmt: d3.format('+.0f'),
+    color: (r) => (r.z >= 1 ? red() : r.z <= -1 ? blue() : gray()),
+    tip: (r) => [r.muscle + ' · ' + r.au, 'z = ' + d3.format('+.2f')(r.z)],
+  });
+});
+
+dash.draw('meter', (el) => {
+  const d = dash.data('clips');
+  el.replaceChildren();
+  if (d.status !== 'ok') return;
+  const row = d.data.find((r) => r.id === clipId());
+  if (!row) return;
+  const v = row[el.dataset.col];
+  const fill = document.createElement('div');
+  fill.className = 'ax-meter-fill';
+  fill.style.width = (v * 100) + '%';
+  fill.style.background = v >= 0.5 ? 'var(--ax-red)' : 'var(--ax-blue)';
+  const mid = document.createElement('div');
+  mid.className = 'ax-meter-mid';
+  el.append(fill, mid);
+});
+
+dash.draw('clip-attn', (el) => {
+  const a = dash.data('clip_attention'), mo = dash.data('clip_moments');
+  el.replaceChildren();
+  if (a.status !== 'ok') return;
+  const id = clipId();
+  const rows = a.data.filter((r) => r.id === id);
+  if (!rows.length) return;
+  const moments = mo.status === 'ok'
+    ? Array.from(d3.group(mo.data.filter((r) => r.id === id), (r) => r.moment), ([k, v]) => ({ moment: k, t: v[0].t }))
+    : [];
+  const W = Math.max(280, el.clientWidth || 700), H = 220, mt = 22, mb = 26, mr = 8;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const maxW = d3.max(rows, (r) => r.weight), uniform = 1 / rows.length;
+  const y = d3.scaleLinear([0, Math.max(maxW, uniform) * 1.15], [H - mb, mt]).nice();
+  const yt = y.ticks(4);
+  const probe = svg.append('text');
+  const ml = d3.max(yt, (t) => probe.text(d3.format('.1%')(t)).node().getComputedTextLength()) + 10;
+  probe.remove();
+  const tMax = d3.max(rows, (r) => r.t) + WIN_S;
+  const x = d3.scaleLinear([0, tMax], [ml, W - mr]);
+
+  svg.append('g').selectAll('line').data(yt).join('line').attr('x1', ml).attr('x2', W - mr)
+    .attr('y1', (t) => y(t)).attr('y2', (t) => y(t)).attr('stroke', 'var(--cds-chart-grid)');
+  svg.append('g').selectAll('text').data(yt).join('text').attr('x', ml - 6).attr('y', (t) => y(t)).attr('dy', '0.35em')
+    .attr('text-anchor', 'end').text(d3.format('.1%'));
+  const xt = x.ticks(W < 480 ? 4 : 8);
+  svg.append('g').selectAll('text').data(xt).join('text').attr('x', (t) => x(t)).attr('y', H - 8).attr('text-anchor', 'middle')
+    .text((t) => t + ' s');
+
+  const bw = Math.max(1, x(WIN_S) - x(0) - 0.5);
+  svg.append('g').selectAll('rect').data(rows).join('rect')
+    .attr('x', (r) => x(r.t)).attr('width', bw).attr('y', (r) => y(r.weight)).attr('height', (r) => y(0) - y(r.weight))
+    .attr('fill', 'var(--ax-blue)').attr('opacity', 0.85);
+  svg.append('line').attr('x1', ml).attr('x2', W - mr).attr('y1', y(uniform)).attr('y2', y(uniform))
+    .attr('stroke', 'var(--ax-label2)').attr('stroke-dasharray', '4 3').attr('stroke-width', 1.5);
+  const mk = svg.append('g').selectAll('g').data(moments).join('g')
+    .attr('transform', (m) => `translate(${x(m.t) + bw / 2},${mt - 10})`);
+  mk.append('circle').attr('r', 8).attr('fill', 'var(--ax-red)');
+  mk.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em').attr('fill', '#fff').style('fill', '#fff')
+    .style('font-weight', 600).text((m) => m.moment);
+
+  const tip = tipFor(el);
+  svg.append('rect').attr('x', ml).attr('y', mt).attr('width', W - mr - ml).attr('height', H - mb - mt).attr('fill', 'transparent')
+    .on('pointermove', (ev) => {
+      const [px] = d3.pointer(ev);
+      const t = x.invert(px);
+      const r = rows[Math.max(0, Math.min(rows.length - 1, Math.floor(t / WIN_S)))];
+      const [ex, ey] = d3.pointer(ev, el);
+      tip.show([d3.format('.1f')(r.t) + '–' + d3.format('.1f')(r.t + WIN_S) + ' s', 'Attention ' + d3.format('.2%')(r.weight)], ex, ey);
+    })
+    .on('pointerleave', () => tip.hide());
+});
+
+dash.draw('moments-body', (tb) => {
+  const d = dash.data('clip_moments');
+  if (d.status !== 'ok') { tb.replaceChildren(); return; }
+  const id = clipId();
+  tb.replaceChildren(...d.data.filter((r) => r.id === id).map((r) => {
+    const tr = document.createElement('tr');
+    tr.dataset.key = r.key;
+    [[r.moment, ''], [r.t, 'ax-num'], [r.muscle, ''], [r.au, ''], [r.z, 'ax-num']].forEach(([v, c]) => {
+      const td = document.createElement('td'); td.textContent = v; if (c) td.className = c; tr.appendChild(td);
+    });
+    return tr;
+  }));
+});
+
+const rgb = (c) => { const x = d3.color(c); return x ? [x.r, x.g, x.b] : [200, 200, 200]; };
+
+function faceViewer(el, { timeline } = {}) {
+  el.replaceChildren();
+  const wrap = document.createElement('div');
+  wrap.className = 'ax-face';
+  const canvas = document.createElement('canvas');
+  canvas.className = 'ax-face-canvas';
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', '3D face model coloured by muscle activity');
+  wrap.appendChild(canvas);
+  el.appendChild(wrap);
+  const tip = tipFor(wrap);
+
+  const v = { root: el, canvas, wrap, yaw: -0.45, pitch: 0.12, verts: [], tris: [], w: [], anchors: [], vals: null, top: [], muscles: [] };
+
+  if (timeline) {
+    const ctrl = document.createElement('div');
+    ctrl.className = 'ax-face-ctrl';
+    v.btn = document.createElement('button');
+    v.btn.type = 'button';
+    v.btn.className = 'ax-btn';
+    v.btn.textContent = '▶︎ Play';
+    v.range = document.createElement('input');
+    v.range.type = 'range';
+    v.range.min = 0;
+    v.range.step = 1;
+    v.range.setAttribute('aria-label', 'Time');
+    v.time = document.createElement('span');
+    v.time.className = 'ax-face-time';
+    ctrl.append(v.btn, v.range, v.time);
+    el.appendChild(ctrl);
+  }
+  v.list = document.createElement('ol');
+  v.list.className = 'ax-face-list';
+  el.appendChild(v.list);
+
+  let drag = null;
+  canvas.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, yaw: v.yaw, pitch: v.pitch }; canvas.setPointerCapture(e.pointerId); tip.hide(); });
+  canvas.addEventListener('pointerup', () => { drag = null; });
+  canvas.addEventListener('pointercancel', () => { drag = null; });
+  canvas.addEventListener('pointerleave', () => tip.hide());
+  canvas.addEventListener('pointermove', (e) => {
+    if (drag) {
+      v.yaw = drag.yaw + (e.clientX - drag.x) * 0.01;
+      v.pitch = Math.max(-0.9, Math.min(0.9, drag.pitch + (e.clientY - drag.y) * 0.006));
+      render(v);
+      return;
+    }
+    if (!v.proj || !v.vals) return;
+    const r = canvas.getBoundingClientRect();
+    const px = e.clientX - r.left, py = e.clientY - r.top;
+    let best = -1, bd = 22 * 22;
+    v.proj.forEach((p, i) => { if (p.front) { const d = (p.x - px) ** 2 + (p.y - py) ** 2; if (d < bd) { bd = d; best = i; } } });
+    if (best < 0) { tip.hide(); return; }
+    const ws = v.w[best];
+    const mi = ws.length ? ws.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : -1;
+    if (mi < 0) { tip.hide(); return; }
+    const a = v.anchors[mi];
+    tip.show([a.muscle + ' · ' + a.au, v.fmtVal(v.vals[mi])], px, py);
+  });
+  return v;
+}
+
+function setFaceData(v, verts, tris, anchors) {
+  if (v.verts.length) return;
+  const idx = new Map(anchors.map((a, i) => [a.muscle, i]));
+  v.anchors = anchors;
+  v.verts = verts.map((r) => [r.x, r.y, r.z]);
+  v.w = verts.map((r) => Object.entries(r.w || {}).map(([m, w]) => [idx.get(m), w]).filter((p) => p[0] != null));
+  v.tris = tris.map((t) => [t.a, t.b, t.c]);
+}
+
+function render(v, scale = v.scale) {
+  if (!v.verts.length) return;
+  v.scale = scale;
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(260, v.wrap.clientWidth || 600);
+  const H = Math.round(Math.min(540, Math.max(320, W * 0.72)));
+  v.canvas.width = W * dpr; v.canvas.height = H * dpr; v.canvas.style.height = H + 'px';
+  const ctx = v.canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const cy = Math.cos(v.yaw), sy = Math.sin(v.yaw), cp = Math.cos(v.pitch), sp = Math.sin(v.pitch);
+  const s = Math.min(W, H) * 0.74, cx = W / 2, cyy = H / 2;
+  const rot = (p) => {
+    const x1 = p[0] * cy + p[2] * sy, z1 = -p[0] * sy + p[2] * cy;
+    return [x1, p[1] * cp - z1 * sp, p[1] * sp + z1 * cp];
+  };
+  const R = v.verts.map(rot);
+  v.proj = R.map((r) => ({ x: cx + r[0] * s, y: cyy - r[1] * s, z: r[2], front: true }));
+
+  const vv = v.w.map((ws) => {
+    if (!v.vals || !ws.length) return 0;
+    let num = 0, den = 0.35;
+    ws.forEach(([m, w]) => { num += w * (v.vals[m] || 0); den += w; });
+    return num / den;
+  });
+  const base = rgb(css('--ax-face')), hot = rgb(css('--ax-red')), cold = rgb(css('--ax-blue'));
+  const order = v.tris.map((t, i) => [i, (R[t[0]][2] + R[t[1]][2] + R[t[2]][2]) / 3]).sort((a, b) => a[1] - b[1]);
+  ctx.lineJoin = 'round';
+  for (const [i] of order) {
+    const [a, b, c] = v.tris[i];
+    const A = R[a], B = R[b], C = R[c];
+    const ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2], wx = C[0] - A[0], wy = C[1] - A[1], wz = C[2] - A[2];
+    const nx = uy * wz - uz * wy, ny = uz * wx - ux * wz, nz = ux * wy - uy * wx;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    const light = 0.5 + 0.5 * Math.abs((nz * 0.85 + ny * 0.35 - nx * 0.2) / len);
+    const val = (vv[a] + vv[b] + vv[c]) / 3;
+    const t = Math.min(1, Math.abs(val) / v.scale) * 0.92;
+    const tgt = val >= 0 ? hot : cold;
+    const col = base.map((bc, k) => Math.round((bc + (tgt[k] - bc) * t) * light));
+    const fill = `rgb(${col[0]},${col[1]},${col[2]})`;
+    const P = v.proj;
+    ctx.beginPath();
+    ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.lineTo(P[c].x, P[c].y); ctx.closePath();
+    ctx.fillStyle = fill; ctx.strokeStyle = fill; ctx.lineWidth = 0.7;
+    ctx.fill(); ctx.stroke();
+  }
+  // hidden vertices (behind the surface) are not hover targets
+  const zMax = d3.max(v.proj, (p) => p.z);
+  v.proj.forEach((p) => { p.front = p.z > zMax - 0.45; });
+
+  ctx.font = `700 11px ${css('--ax-font')}`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  v.top.forEach((mi, k) => {
+    const p = rot([v.anchors[mi].x, v.anchors[mi].y, v.anchors[mi].z]);
+    const x = cx + p[0] * s, y = cyy - p[1] * s;
+    ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = css('--ax-red'); ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.fillText(String(k + 1), x, y + 0.5);
+  });
+}
+
+function setValues(v, vals, fmtVal) {
+  v.vals = vals;
+  v.fmtVal = fmtVal;
+  v.top = vals.map((z, i) => [i, z]).filter((p) => p[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map((p) => p[0]);
+  v.list.replaceChildren(...v.top.map((mi, k) => {
+    const li = document.createElement('li');
+    const n = document.createElement('span'); n.className = 'ax-face-num'; n.textContent = k + 1;
+    const name = document.createElement('span'); name.textContent = v.anchors[mi].muscle + ' ';
+    const au = document.createElement('span'); au.className = 'ax-face-au'; au.textContent = v.anchors[mi].au;
+    const val = document.createElement('b'); val.textContent = fmtVal(vals[mi]);
+    name.appendChild(au);
+    li.append(n, name, val);
+    return li;
+  }));
+}
+
+const faceReady = () => ['face_vertices', 'face_triangles', 'face_anchors'].every((id) => dash.data(id).status === 'ok');
+
+dash.draw('face-global', {
+  mount: (el) => faceViewer(el, {}),
+  update: (el, v) => {
+    if (!faceReady() || dash.data('muscles_global').status !== 'ok') return;
+    setFaceData(v, dash.data('face_vertices').data, dash.data('face_triangles').data, dash.data('face_anchors').data);
+    const byMuscle = new Map(dash.data('muscles_global').data.map((r) => [r.muscle, r]));
+    const fmtD = (x) => "Cliff's δ " + d3.format('+.2f')(x);
+    const vals = v.anchors.map((a) => { const r = byMuscle.get(a.muscle); return r && r.p_value < ALPHA ? r.cliffs_delta : 0; });
+    setValues(v, vals, fmtD);
+    render(v, 0.5);
+  },
+});
+
+dash.draw('face-clip', {
+  mount: (el) => {
+    const v = faceViewer(el, { timeline: true });
+    v.i = 0;
+    v.fmt = (z) => 'z ' + d3.format('+.1f')(z);
+    const show = () => {
+      if (!v.rows || !v.rows.length) return;
+      v.i = Math.max(0, Math.min(v.rows.length - 1, v.i));
+      v.range.value = v.i;
+      const t = v.rows[v.i].t;
+      v.time.textContent = d3.format('.1f')(t) + ' / ' + d3.format('.1f')(v.rows[v.rows.length - 1].t + WIN_S) + ' s';
+      setValues(v, v.rows[v.i].z, v.fmt);
+      render(v, 2.5);
+    };
+    const stop = () => { clearInterval(v.timer); v.timer = null; v.btn.textContent = '▶︎ Play'; };
+    v.btn.addEventListener('click', () => {
+      if (v.timer) { stop(); return; }
+      if (v.i >= v.rows.length - 1) v.i = 0;
+      v.btn.textContent = '❚❚ Pause';
+      v.timer = setInterval(() => { v.i += 1; if (v.i >= v.rows.length) { v.i = v.rows.length - 1; stop(); } show(); }, WIN_S * 1000);
+    });
+    v.range.addEventListener('input', () => { v.i = +v.range.value; show(); });
+    v.show = show;
+    v.stop = stop;
+    return v;
+  },
+  update: (el, v) => {
+    const tl = dash.data('clip_muscle_timeline');
+    if (!faceReady() || tl.status !== 'ok') return;
+    setFaceData(v, dash.data('face_vertices').data, dash.data('face_triangles').data, dash.data('face_anchors').data);
+    const id = clipId();
+    if (v.clip !== id) {
+      v.stop();
+      v.clip = id;
+      v.rows = tl.data.filter((r) => r.id === id).sort((a, b) => a.t - b.t);
+      v.range.max = Math.max(0, v.rows.length - 1);
+      v.i = 0;
+    }
+    if (!v.rows.length) { v.list.replaceChildren(); return; }
+    v.show();
+  },
+  unmount: (el, v) => { if (v) v.stop(); },
+});
+
+dash.draw('clip-select', (sel) => {
+  const d = dash.data('clips');
+  const rows = d.status === 'ok' ? d.data : [];
+  // rebuild options only when the list changes, so an open dropdown stays open
+  if (sel.options.length !== rows.length) sel.replaceChildren(...rows.map((r) => new Option(r.id + ' · ' + r.label, r.id)));
+  if (sel.value !== clipId()) sel.value = clipId();
+  sel.onchange = () => dash.setParams({ clip: sel.value });
+});
+
+window.axSort = { key: 'prob_lstm', dir: -1 };
+dash.draw('clips-body', (tb) => {
+  const d = dash.data('clips');
+  if (d.status !== 'ok') { tb.replaceChildren(); return; }
+  const q = (document.getElementById('ax-q')?.value || '').trim().toLowerCase();
+  const { key, dir } = window.axSort;
+  const rows = d.data.filter((r) => !q || [r.id, r.label, r.case].join(' ').toLowerCase().includes(q))
+    .sort((a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0) * dir);
+  const cur = clipId();
+  tb.replaceChildren(...rows.map((r) => {
+    const tr = document.createElement('tr');
+    if (r.id === cur) tr.className = 'is-sel';
+    [['id', ''], ['label', ''], ['case', 'ax-hide-narrow'], ['fold', 'ax-num ax-hide-narrow'], ['prob_lstm', 'ax-num'], ['prob_cnn', 'ax-num ax-hide-narrow'], ['prob_rf', 'ax-num']]
+      .forEach(([f, c]) => { const td = document.createElement('td'); td.textContent = r[f]; if (c) td.className = c; tr.appendChild(td); });
+    return tr;
+  }));
+});
+
+document.querySelectorAll('.ax-table th button[data-sort]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const k = btn.dataset.sort;
+    window.axSort = { key: k, dir: window.axSort.key === k ? -window.axSort.dir : (k.startsWith('prob') ? -1 : 1) };
+    document.querySelectorAll('.ax-table th button[data-sort]').forEach((b) =>
+      b.parentElement.setAttribute('aria-sort', b.dataset.sort === k ? (window.axSort.dir > 0 ? 'ascending' : 'descending') : 'none'));
+    dash.draw('clips-body');
+  });
+});
+document.querySelectorAll('#ax-q').forEach((inp) => inp.addEventListener('input', () => dash.draw('clips-body')));
+
+function showTab(name) {
+  document.querySelectorAll('.ax-page').forEach((s) => { s.hidden = s.dataset.page !== name; });
+  document.querySelectorAll('.ax-seg button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+  dash.setLink(name);
+}
+document.querySelectorAll('.ax-seg button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+document.querySelectorAll('.ax-clickable tbody').forEach((tb) => tb.addEventListener('click', (ev) => {
+  const tr = ev.target.closest('tr');
+  if (!tr || !tr.firstChild) return;
+  dash.setParams({ clip: tr.firstChild.textContent });
+  showTab('explorer');
+}));
+const startTab = location.hash.slice(1);
+if (['overview', 'explorer', 'clips'].includes(startTab)) showTab(startTab);
+
+dash.onData(() => {
+  const d = dash.data('clips');
+  const r = d.status === 'ok' ? d.data.find((x) => x.id === clipId()) : null;
+  const hide = !(r && r.source_fps < LOW_FPS);
+  document.querySelectorAll('.ax-lowfps').forEach((el) => { if (el.hidden !== hide) el.hidden = hide; });
+});
+</script>

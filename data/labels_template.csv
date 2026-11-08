@@ -1,0 +1,5 @@
+filename,label,subject_id
+trial_001,1,subj_01
+trial_002,0,subj_01
+trial_003,1,subj_02
+trial_004,0,subj_02

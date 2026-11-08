@@ -1,0 +1,1 @@
+[{"model":"LSTM + attention","accuracy":0.478,"auc":0.446},{"model":"Temporal CNN","accuracy":0.461,"auc":0.471},{"model":"Random Forest (baseline)","accuracy":0.522,"auc":0.569}]
